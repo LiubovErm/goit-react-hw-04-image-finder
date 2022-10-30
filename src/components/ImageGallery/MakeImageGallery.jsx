@@ -1,5 +1,5 @@
 import { fetchPictures } from '../../services/images-api';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageGallery } from './ImageGallery';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
@@ -17,125 +17,115 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-export class MakeImageGallery extends Component {
-  state = {
-    images: [],
-    largeImage: '',
-    page: 1,
-    status: Status.IDLE,
-    error: null,
-    showModal: false,
-    showBtnLoadMore: false,
-    showLoader: false,
-    smoothScroll: false,
-  };
+export const MakeImageGallery = ({ findImage }) => {
 
-  componentDidUpdate = prevProps => {
-    const prevImage = prevProps.imagesName;
-    const nextImage = this.props.imagesName; 
-      
-    if (prevImage !== nextImage) {
-      this.setState({ status: Status.PENDING, page: 1, showLoader: true }, () => {
-        const page = this.state.page;
+  const [imagesName, setImagesName] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState(Status.IDLE);
+  const [isModal, setIsModal] = useState(false);
+  const [largeImage, setLargeImage] = useState('');
+  const [showBtnLoadMore, setShowBtnLoadMore] = useState(false);
 
-        fetchPictures(nextImage, page)
+
+  useEffect(() => {
+    if (imagesName !== findImage) {
+      setImagesName(findImage);
+      setPage(1);
+      setImages([]);
+      setStatus(Status.PENDING);
+
+      fetchPictures(findImage, 1)
         .then(images => {
-             if (images.totalHits !== 0) {
-               toast.success(`Hooray! We found ${images.totalHits} images.`, { theme: "colored" });
-               this.setState({showBtnLoadMore: true });
-                } if (images.totalHits <= 12) {
-               this.setState({showBtnLoadMore: false});}
-           
-            this.setState({
-            images: [...images.hits],
-            status: Status.RESOLVED,
-            showLoader: false,
-            smoothScroll: true,
-            });
+          if (images.totalHits <= 12) {
+            setShowBtnLoadMore(false);
+          } else {setShowBtnLoadMore(true);}
+          
+          setImages(images.hits);
+          setStatus(Status.RESOLVED);
+          toast.success(`Hooray! We found ${images.totalHits} images.`, { theme: "colored" });
         })
-       .catch(error => this.setState({ error, status: Status.REJECTED }));
-});
-}
-};
+        .catch(error => {
+          setError(error);
+          setStatus(Status.REJECTED);
+        });
+      return;
+    }
 
-  onNextPage = () => {
-        
-    this.setState(
-      prevState => ({page: (prevState.page += 1),}),() => {
-        this.setState({ status: Status.PENDING, showLoader: true });
-        const page = this.state.page;
-        const nextImage = this.props.imagesName;
-        const { smoothScroll } = this.state;
+    if (page !== 1) {
+      setPage(page);
+      setStatus(Status.PENDING);
 
-        fetchPictures(nextImage, page)
-          .then(images => {
-              if (page === Math.ceil(images.totalHits / 12)) {
-                  toast.info("We're sorry, but you've reached the end of search results.", { theme: "colored" });
-                  this.setState( {showBtnLoadMore: false});
-              }
-             
-            this.setState(prevState => ({
-                images: [...prevState.images, ...images.hits],
-                status: Status.RESOLVED,
-                showLoader: false,
-                smoothScroll: true,
-            }));
-            if (smoothScroll) {this.windowScroll();}
-          })
-          .catch(error => this.setState({ error, status: Status.REJECTED }));
-      }
-    );
+      fetchPictures(imagesName, page)
+        .then(images => {
+          if (page === Math.ceil(images.totalHits / 12)) {
+            setShowBtnLoadMore(false);
+            toast.info("We're sorry, but you've reached the end of search results.", { theme: "colored" });
+          }
+          setImages(prev => [...prev, ...images.hits]);
+          setStatus(Status.RESOLVED);
+           window.scrollBy({
+           top: 220,
+           left: 0,
+           behavior: 'smooth',
+          });
+        })
+        .catch(error => {
+          setError(error);
+          setStatus(Status.REJECTED);
+        });
+      return;
+    }
+   
+  }, [imagesName, findImage, page]);
+
+ const onNextPage = page => {
+    setPage(page);
   };
 
-  openModal = url => {
-    this.setState({ largeImage: url});
-    this.toggleModal();
+  const openModal = url => {
+    setLargeImage(url);
+    toggleModal();
     };
     
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleModal = () => {
+     setIsModal(!isModal);
   };
     
-  windowScroll = () => {
-    window.scrollBy({
-      top: 220,
-      left: 0,
-      behavior: 'smooth',
-    });
-  };
-
-  render() {
-   const { status, images, largeImage, showModal, showBtnLoadMore, showLoader } = this.state;
-     
-    if (status === 'idle') {
-       return (
-       <Box width = {500} height = {500} mx='auto' pt = {100} fontSize = {56} fontWeight ={500} display ="flex" justifyContent="center" > Введіть щось </Box>
-       )
-    }
-
-    if (status === 'rejected') {
+  switch (status) {
+    
+    case 'idle':
+      return <Box width={500} height={500} mx='auto' pt={100} fontSize={56} fontWeight={500} display="flex" justifyContent="center" > Введіть щось </Box>
+    case 'pending':
       return (
-      <Box width = {500} mx='auto' pt = {100} display ="flex" justifyContent="center" > 
-      <RejectedBox src = {oops}/>
-      </Box>
-      )
-    }
-
-    if (status === 'pending'|| status === 'resolved') {
-      return (
-        <Box maxWidth={1500} mx='auto'>
-          <ImageGallery images={images} onImageClick={this.openModal}/>
-          {showModal && (<Modal largeImage={largeImage} onClose={this.toggleModal}/>)}
-          {showBtnLoadMore && (<Button nextPage={this.onNextPage} />)}
-          {showLoader && (<Loader />)}
-        </Box>
+        <>
+          <Box maxWidth={1500} mx='auto'>
+            <ImageGallery images={images} onImageClick={openModal} />
+          </Box>
+          <Loader />
+        </>
       );
-    }
+    case 'rejected':
+      return (
+        <Box width={500} mx='auto' pt={100} display="flex" justifyContent="center" >
+          <RejectedBox src={oops} />
+        </Box>);
+
+    case 'resolved':
+      return (
+        <>
+          <Box maxWidth={1500} mx='auto'>
+            <ImageGallery images={images} onImageClick={openModal} />
+            {showBtnLoadMore && (<Button onClick={onNextPage} page={page} /> )};
+            {isModal && (<Modal largeImage={largeImage} onClose={toggleModal} />)}
+          </Box>
+        </>
+      );
+    default: return;
   }
-}
+  }
 
 MakeImageGallery.propTypes = {
-  imagesName: PropTypes.string.isRequired,
+  findImage: PropTypes.string.isRequired,
 };

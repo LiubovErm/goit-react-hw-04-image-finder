@@ -16,7 +16,7 @@ export const App = () => {
       
       <Box>
         <SearchBar onSubmit={handleFormSubmit}/>
-        <MakeImageGallery imagesName={imagesName} />
+        <MakeImageGallery findImage={imagesName} />
         <ToastContainer autoClose={2000}/>
       </Box>
     
