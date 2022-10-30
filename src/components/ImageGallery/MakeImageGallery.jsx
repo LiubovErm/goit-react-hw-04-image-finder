@@ -22,7 +22,6 @@ export const MakeImageGallery = ({ findImage }) => {
   const [imagesName, setImagesName] = useState('');
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
-  const [error, setError] = useState(null);
   const [status, setStatus] = useState(Status.IDLE);
   const [isModal, setIsModal] = useState(false);
   const [largeImage, setLargeImage] = useState('');
@@ -47,7 +46,7 @@ export const MakeImageGallery = ({ findImage }) => {
           toast.success(`Hooray! We found ${images.totalHits} images.`, { theme: "colored" });
         })
         .catch(error => {
-          setError(error);
+          console.log(error);
           setStatus(Status.REJECTED);
         });
       return;
@@ -72,7 +71,7 @@ export const MakeImageGallery = ({ findImage }) => {
           });
         })
         .catch(error => {
-          setError(error);
+          console.log(error);
           setStatus(Status.REJECTED);
         });
       return;
