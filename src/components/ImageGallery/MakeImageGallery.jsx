@@ -139,4 +139,3 @@ export class MakeImageGallery extends Component {
 MakeImageGallery.propTypes = {
   imagesName: PropTypes.string.isRequired,
 };
-

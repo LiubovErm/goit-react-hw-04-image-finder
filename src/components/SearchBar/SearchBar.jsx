@@ -1,41 +1,36 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { Form, Input, Button } from './SearchBar.styled'
 import { FiSearch } from "react-icons/fi";
 import { toast } from 'react-toastify';
 import PropTypes from 'prop-types';
 
-export class SearchBar extends Component {
-  state = {
-    imagesName: '',
+export const SearchBar = ({ onSubmit }) => {
+  const [imagesName, setImagesName] = useState('');
+  
+  const handleImageChange = event => {
+    const { value } = event.target;
+    setImagesName(value.toLowerCase());
   };
 
-  handleImageChange = event => {
-    this.setState({ imagesName: event.currentTarget.value.toLowerCase() });
-  };
 
-
-  handleSubmit = event => {
+  const handleSubmit = event => {
     event.preventDefault();
-    if (this.state.imagesName.trim() === '') {
+    if (imagesName.trim() === '') {
       toast.error('Треба щось ввести');
       return;
     }
-
-    this.props.onSubmit(this.state.imagesName);
-    this.setState({ imagesName: '' });
+    onSubmit(imagesName);
+    setImagesName('');
   };
-
-
-  render() {
     
     return (
-        <Form onSubmit={this.handleSubmit}>
+        <Form onSubmit={handleSubmit}>
          <Input
             type="text"
             name="imageName"
-            onChange={this.handleImageChange}
+            onChange={handleImageChange}
             autoComplete="off"
-            value={this.state.imagesName}
+            value={imagesName}
             placeholder="Я шукаю..."
           />
            <Button type="submit">
@@ -45,7 +40,7 @@ export class SearchBar extends Component {
       
     );
   }
-}
+
 
 SearchBar.propTypes = {
   onSubmit: PropTypes.func.isRequired,
