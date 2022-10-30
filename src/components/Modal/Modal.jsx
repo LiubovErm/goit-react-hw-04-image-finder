@@ -1,37 +1,32 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Backdrop, ImageWrapper, LargeImage } from './Modal.styled';
 import PropTypes from 'prop-types';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export class Modal extends Component {
+export const Modal = ({ onClose, largeImage }) => {
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.closeModalEsc);
-  }
+  useEffect(() => {
+    window.addEventListener('keydown', closeModalEsc);
+    return () => {window.removeEventListener('keydown', closeModalEsc);
+    };
+  });
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.closeModalEsc);
-  }
-
-  closeModalBackdrop = event => {
+  const closeModalBackdrop = event => {
     if (event.currentTarget === event.target) {
-      this.props.onClose();
+      onClose();
       }
   };
 
-  closeModalEsc = event => {
+  const closeModalEsc = event => {
     if (event.code === 'Escape') {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  render() {
-    const { largeImage } = this.props;
-
     return createPortal (
-      <Backdrop onClick={this.closeModalBackdrop}>
+      <Backdrop onClick={closeModalBackdrop}>
         <ImageWrapper>
           <LargeImage src={largeImage} />
         </ImageWrapper>
@@ -39,7 +34,7 @@ export class Modal extends Component {
       modalRoot
     );
   }
-}
+
 
 Modal.propTypes = {
   onClose: PropTypes.func.isRequired,

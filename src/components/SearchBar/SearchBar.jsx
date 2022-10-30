@@ -12,7 +12,6 @@ export const SearchBar = ({ onSubmit }) => {
     setImagesName(value.toLowerCase());
   };
 
-
   const handleSubmit = event => {
     event.preventDefault();
     if (imagesName.trim() === '') {
